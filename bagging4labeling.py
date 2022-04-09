@@ -1,3 +1,4 @@
+from dataclasses import replace
 from sklearn.datasets import load_iris
 from sklearn.datasets import load_breast_cancer
 from sklearn.datasets import load_wine
@@ -34,27 +35,35 @@ def loadDatabase():
     return df, dfNormal, df.drop(['target'], axis=1).values, df['target'].values, list(df.drop(['target'], axis=1).columns)
 
 
-def bagging(perSamples, n):
+def bagging(perSamples, n, choice):
     df, dfN, X, Y, columnNames = loadDatabase()
-    from Lopes import main
+    from Lopes import main as mLopes
+    from Lucia import main as mLucia
 
-    baseInformation = main.first_stage(df, dfN, X, Y, columnNames)
-    L = [0]*(len(columnNames)-1)
-    A = [0.]*(len(columnNames)-1)
+    if choice == 'lopes':
+        method = mLopes
+    elif choice == 'lucia':
+        method = mLucia
+
+    baseInformation, nGroups = method.first_stage(df, dfN, X, Y, columnNames)
+    L = [0]*nGroups
+    A = [0.]*nGroups
 
     for per in perSamples:
         for i in range(n):
             print(f'\n{per*100}% -- Sample {i}')
             dfBagg = pd.DataFrame(columns=baseInformation.columns)
             for index, group in baseInformation.groupby('target'):
-                dfBagg = pd.concat([dfBagg, group.sample(frac=per)])
-            label, acc = main.final_stage(df, dfN, X, Y, columnNames, dfBagg)
+                dfBagg = pd.concat([dfBagg, group.sample(frac=per, replace=True)])
+            label, acc = method.final_stage(df, dfN, X, Y, columnNames, dfBagg)
             for j in range(len(acc)):
                 if acc[j] > A[j]:
                     A[j] = acc[j]
-                    L[j] = label[j]
+                    if choice == 'lopes': L[j] = label[j]
+                    if choice == 'lucia': L[j] = label[label['Cluster'] == j+1]
 
-    print(f'Labels:\n{L}')
+    print(f'\n\nLabels:\n{L}')
     print(f'Accuracy: {A}')
 
-bagging([1., 0.8, 0.65, 0.5, 0.33], 3)
+#bagging([1., 0.8, 0.65, 0.5], 3, 'lucia')
+bagging([1., 0.8, 0.65, 0.5], 3, 'lopes')

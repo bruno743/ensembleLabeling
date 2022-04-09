@@ -23,7 +23,7 @@ def first_stage(df, dfN, X, Y, columnNames):
     groups = clustering(X, Y)
     discretized['target'] = groups
 
-    return discretized
+    return discretized, len(np.unique(groups))
 
 def discretization(df):
     vector_num_faixas = int(input('Enter the range of values: '))
@@ -97,6 +97,8 @@ def final_stage(df, dfN, X, Y, columnNames, baseInformation):
 
     labels = atrib_rotul(frames_disc, 'target', relevant, VARIATION, INFOR)
     acc = [0.]*len(labels)
+    labels_ = [0]*len(labels)
+    count = 0
     for i, group in df.groupby('target'):
         for l in labels:
             p = group.copy()
@@ -104,9 +106,12 @@ def final_stage(df, dfN, X, Y, columnNames, baseInformation):
                 p = p[(p[tuple[0]] >= tuple[1]) & (p[tuple[0]] <= tuple[2])]
             print(f'\nLabel {l[0]}: {l[1][0:]}')
             print(f'Accuracy for label {l[0]} in group {i} is: {len(p)} == {round(len(p)/len(group), 3)}')
-            if len(p)/len(group) > acc[l[0]]: acc[l[0]] = round(len(p)/len(group), 3)
+            if len(p)/len(group) > acc[count]:
+                acc[count] = round(len(p)/len(group), 3)
+                labels_[count] = l
+        count+=1
 
-    return labels, acc
+    return labels_, acc
 
 def supervised(metodo, data, percnt, folds):
     # vetor para calcular a relevância de cada atributo
@@ -117,6 +122,9 @@ def supervised(metodo, data, percnt, folds):
         for j in range(data.shape[1]):
             Y = data.loc[:,data.columns[j]].values
             X = data.drop(data.columns[j], axis=1).values
+            if len(X) < 2 or len(Y) < 2:
+                acur[j] += 0.
+                continue
             x_train, x_test, y_train, y_test = train_test_split(X, Y, test_size=percnt)
             
             y_train=np.asarray(y_train, dtype="|S6")
