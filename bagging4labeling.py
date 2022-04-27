@@ -47,25 +47,41 @@ def bagging(perSamples, n, choice):
         method = mLucia
 
     baseInformation, nGroups = method.first_stage(df, dfN, X, Y, columnNames)
+    print(baseInformation['target'].values)
+    print()
+    print(df['target'].values)
     L = [0]*nGroups
     A = [0.]*nGroups
     I = np.unique(Y)
 
     for per in perSamples:
         for i in range(n):
-            print(f'\n{per*100}% -- Sample {i}')
+            #print(f'\n{per*100}% -- Sample {i}')
             dfBagg = pd.DataFrame(columns=baseInformation.columns)
             for index, group in baseInformation.groupby('target'):
                 dfBagg = pd.concat([dfBagg, group.sample(frac=per, replace=True)])
             label, acc = method.final_stage(df, dfN, X, Y, columnNames, dfBagg)
             for j in range(len(acc)):
                 if acc[j] > A[j]:
-                    A[j] = acc[j]
-                    if choice == 'lopes': L[j] = label[j]
-                    if choice == 'lucia': L[j] = label[label['Cluster'] == I[j]]
+                    A[j] = float(acc[j])
+                    L[j] = label[j]
 
-    print(f'\n\nLabels:\n{L}')
-    print(f'Accuracy: {A}')
+    print(f'\n\nLabels:\n{L}\n\nAccuracy: {A}\n\n')
+    return L, A
 
-bagging([1., 0.8, 0.65, 0.5], 3, 'lucia')
-#bagging([1., 0.8, 0.65, 0.5], 3, 'lopes')
+labels_0, accur_0 = bagging([1., .8, .65], 12, 'lucia')
+labels_1, accur_1 = bagging([1.], 1, 'lopes')
+
+def bestLabes(labels, accs):
+    R = []
+    I = []
+    for a in tuple(accs):
+        I.append(a.index(max(a)))
+    
+    for l in tuple(labels):
+        R.append(l[I[0]])
+        del I[0]
+
+    print(R)
+
+bestLabes(zip(labels_0, labels_1), zip(accur_0, accur_1))

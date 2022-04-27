@@ -55,7 +55,7 @@ def first_stage(df, dfN, X, Y, columnNames):
     return yy, len(np.unique(yy['target']))
 
 def final_stage(df, dfN, X, Y, columnNames, baseInformation):
-    curves_diff = 0.1
+    curves_diff = 0.8
     acceptable_error = 0.2
 
     baseInformation = baseInformation.rename(columns={'target' : 'Cluster'})
@@ -82,9 +82,13 @@ def final_stage(df, dfN, X, Y, columnNames, baseInformation):
 
     ranged_attr, results, labels, rotulation_process = _label(relevanteRanges, acceptable_error, df)
 
-    print('\n\nresults: \n\n')
-    print(results)
-    print('\n\nlabels: \n\n')
-    print(labels)
+    '''print(f'\nra:\n{ranged_attr}\n')
+    print(f'\nr:\n{results}\n')
+    print(f'\nl:\n{labels}\n')
+    print(f'\nrp:\n{rotulation_process}\n')'''
     
-    return labels.drop('Precision', axis=1), results.drop('Cluster', axis=1).values
+    L = []
+    for index, group in labels.drop('Precision', axis=1).groupby('Cluster'):
+            L.append([(g[1], g[2], g[3]) for g in group.values])
+    
+    return L, results.drop('Cluster', axis=1).values
