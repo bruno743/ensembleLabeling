@@ -14,9 +14,9 @@ VARIATION = 0
 def first_stage(df, dfN, X, Y, columnNames):
     print('Method params:')
     global PERCENT
-    PERCENT = float(input('Enter the percentual for training (float value): '))
+    PERCENT = float(input('Enter the percentual for training (EX: 0.3): '))
     global VARIATION
-    VARIATION = float(input('Enter the value of variation: '))
+    VARIATION = float(input('Enter the value of variation(EX: 8.5): '))
     values, discretized, infor = discretization(df)
     global INFOR
     INFOR = infor
@@ -26,7 +26,7 @@ def first_stage(df, dfN, X, Y, columnNames):
     return discretized, len(np.unique(groups))
 
 def discretization(df):
-    vector_num_faixas = int(input('Enter the range of values: '))
+    vector_num_faixas = int(input('Enter the range of values for discretization: '))
     vector_num_faixas = [vector_num_faixas]*df.shape[1]
     metodo = input('Enter the method:\n1 for EWD;\n2 for EFD.\n')
     if metodo == '2':

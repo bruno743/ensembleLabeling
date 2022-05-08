@@ -1,4 +1,3 @@
-from dataclasses import replace
 from sklearn.datasets import load_iris
 from sklearn.datasets import load_breast_cancer
 from sklearn.datasets import load_wine
@@ -36,20 +35,20 @@ def loadDatabase():
     return df, dfNormal, df.drop(['target'], axis=1).values, df['target'].values, list(df.drop(['target'], axis=1).columns)
 
 
-def bagging(perSamples, n, choice):
-    df, dfN, X, Y, columnNames = loadDatabase()
+def bagging(database, perSamples, n, choice):
+    df, dfN, X, Y, columnNames = database
     from Lopes import main as mLopes
     from Lucia import main as mLucia
+    from Pertinencia import main as mPertinence
 
     if choice == 'lopes':
         method = mLopes
     elif choice == 'lucia':
         method = mLucia
+    elif choice == 'pertinence':
+        method = mPertinence
 
     baseInformation, nGroups = method.first_stage(df, dfN, X, Y, columnNames)
-    print(baseInformation['target'].values)
-    print()
-    print(df['target'].values)
     L = [0]*nGroups
     A = [0.]*nGroups
     I = np.unique(Y)
@@ -58,8 +57,11 @@ def bagging(perSamples, n, choice):
         for i in range(n):
             #print(f'\n{per*100}% -- Sample {i}')
             dfBagg = pd.DataFrame(columns=baseInformation.columns)
-            for index, group in baseInformation.groupby('target'):
-                dfBagg = pd.concat([dfBagg, group.sample(frac=per, replace=True)])
+            try:
+                for index, group in baseInformation.groupby('target'):
+                    dfBagg = pd.concat([dfBagg, group.sample(frac=per, replace=True)])
+            except:
+                dfBagg = pd.concat([dfBagg, baseInformation.sample(frac=per, replace=True)])
             label, acc = method.final_stage(df, dfN, X, Y, columnNames, dfBagg)
             for j in range(len(acc)):
                 if acc[j] > A[j]:
@@ -69,10 +71,12 @@ def bagging(perSamples, n, choice):
     print(f'\n\nLabels:\n{L}\n\nAccuracy: {A}\n\n')
     return L, A
 
-labels_0, accur_0 = bagging([1., .8, .65], 12, 'lucia')
-labels_1, accur_1 = bagging([1.], 1, 'lopes')
+db = loadDatabase()
+labels_0, accur_0 = bagging(db, [1., .8, .65], 3, 'lucia')
+labels_1, accur_1 = bagging(db, [1., .8, .65], 2, 'lopes')
+labels_2, accur_2 = bagging(db, [1., .8, .65], 3, 'pertinence')
 
-def bestLabes(labels, accs):
+def bestLabels(labels, accs):
     R = []
     I = []
     for a in tuple(accs):
@@ -84,4 +88,4 @@ def bestLabes(labels, accs):
 
     print(R)
 
-bestLabes(zip(labels_0, labels_1), zip(accur_0, accur_1))
+bestLabels(zip(labels_0, labels_1, labels_2), zip(accur_0, accur_1, accur_2))
