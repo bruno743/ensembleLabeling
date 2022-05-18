@@ -67,7 +67,7 @@ def final_stage(df, dfN, X, Y, columnNames, baseInformation):
                 p2 = p2[(p2[tuple[0]] >= tuple[1]) & (p2[tuple[0]] <= tuple[2])]
             #print(f'\nLabel {l}')
             #print(f'Accuracy for label {l} in group {i} is: {len(p)} == {round(len(p)/len(group), 3)}')
-            media = (len(p)/len(group) + (1. - len(p2)/len(df)))/2
+            media = (len(p)/len(group) + (1. - len(p2)/len(df - group)))/2
             #print(f'\np1: {len(p)/len(group)}\np2: {1. - len(p2)/len(df)}\nmedia: {media}\n')
             if media > acc[count] and l not in labels_:
                 acc[count] = round(len(p)/len(group), 3)

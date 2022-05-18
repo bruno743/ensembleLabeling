@@ -51,11 +51,9 @@ def bagging(database, perSamples, n, choice):
     baseInformation, nGroups = method.first_stage(df, dfN, X, Y, columnNames)
     L = [0]*nGroups
     A = [0.]*nGroups
-    I = np.unique(Y)
 
     for per in perSamples:
         for i in range(n):
-            #print(f'\n{per*100}% -- Sample {i}')
             dfBagg = pd.DataFrame(columns=baseInformation.columns)
             try:
                 for index, group in baseInformation.groupby('target'):

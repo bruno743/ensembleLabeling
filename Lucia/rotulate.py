@@ -71,7 +71,7 @@ def _hit_label(rotulo, data, i):
 		idx = rotulo.groupby(['Atributo']).apply(lambda x:
 			list(data_[(data_[x.Atributo.values[0]] >= x.min_faixa.values[0]) & (data_[x.Atributo.values[0]] <= x.max_faixa.values[0])].index))
 		intersec = list(set.intersection(*map(set, [idx[i] for i in list(idx.keys())])))
-		accuracy[clt] = np.round(len(intersec) / data_.shape[0],2)
+		accuracy[clt] = np.round(len(intersec) / data_.shape[0],4)
 	cluster_acc = accuracy[i]
 	max_other_acc = max([accuracy[x] for x in list(accuracy) if x != i])
 	return (accuracy, max_other_acc, cluster_acc)
