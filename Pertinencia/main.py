@@ -5,29 +5,12 @@ from .part_1 import part_1
 from .part_2 import part_2
 import pandas as pd
 
-def mrp(csv_file, num_groups, algorithm):
-    dataset = []
-
-    for row in csv_file:
-        dataset.append([round(float(element), 2) for element in row])
-
-    if algorithm == 0:  # K-Means
-        pertinence_list = part_1(dataset, num_groups)
-
-        return dataset, pertinence_list
-    else:  # Fuzzy C-means
-        numpy_array = np.array(dataset)
-        f_cmeans = FCM(num_groups)
-        pertinence_list = f_cmeans.fit(numpy_array)
-
-        return dataset, pertinence_list
-
 NGROUPS = 0
 GS = 0
 IGS = 0
 DATASET = 0
 
-def first_stage(df, dfN, X, Y, columnNames):
+def first_stage(df, dfN, X, Y, columnNames, kmeans):
 
     #algorithm = int(input('algorithm: '))
     algorithm = 0
@@ -42,7 +25,10 @@ def first_stage(df, dfN, X, Y, columnNames):
     IGS = 0.0001
 
     # Init the program
-    dataset, pertinence_list = mrp(X, NGROUPS, algorithm)
+    dataset = []
+    for row in X:
+        dataset.append([round(float(element), 2) for element in row])
+    pertinence_list = part_1(kmeans, dataset, NGROUPS)
 
     bi = [dataset[i] + pertinence_list[i] for i in range(len(dataset))]
 

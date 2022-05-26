@@ -1,8 +1,8 @@
 from sklearn.cluster import KMeans
 
 
-def part_1(dataset, num_groups):
-    kmeans = KMeans(n_clusters=num_groups, random_state=0).fit(dataset)
+def part_1(kmeans, dataset, num_groups):
+    #kmeans = KMeans(n_clusters=num_groups, random_state=0).fit(dataset)
     distance_array = kmeans.transform(dataset)
 
     inverse_distance_array = []

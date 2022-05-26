@@ -1,9 +1,6 @@
-from sklearn.cluster import KMeans
 from sklearn.neural_network import MLPClassifier as mlp
-from sklearn.tree import DecisionTreeClassifier as tree
 from sklearn.model_selection import train_test_split
 import pandas as pd
-import matplotlib.pyplot as plt
 import numpy as np
 import sys
 
@@ -11,7 +8,7 @@ INFOR = 0
 PERCENT = 0
 VARIATION = 0
 
-def first_stage(df, dfN, X, Y, columnNames):
+def first_stage(df, dfN, X, Y, columnNames, kmeans):
     print('Method params:')
     global PERCENT
     PERCENT = float(input('Enter the percentual for training (EX: 0.3): '))
@@ -20,7 +17,7 @@ def first_stage(df, dfN, X, Y, columnNames):
     values, discretized, infor = discretization(df)
     global INFOR
     INFOR = infor
-    groups = clustering(X, Y)
+    groups = kmeans.labels_
     discretized['target'] = groups
 
     return discretized, len(np.unique(groups))
@@ -67,20 +64,11 @@ def discretization(df):
     
     return ddb, data, infor
 
-def clustering(X, Y):
+"""def clustering(X, Y):
     km = KMeans(n_clusters=len(np.unique(Y)))
     km = km.fit(X)
 
-    '''for cluster in np.unique(km.labels_):
-        row_ix = np.where(km.labels_ == cluster)
-        plt.scatter(X[row_ix, 0], X[row_ix, 1], s=200)
-    
-    plt.scatter(km.cluster_centers_[:, 0], km.cluster_centers_[:, 1],
-                  marker='*', s=300,
-                  c='r', label='centroid')
-    plt.show()'''
-
-    return km.labels_
+    return km.labels_"""
 
 def final_stage(df, dfN, X, Y, columnNames, baseInformation):
     frames_disc = []

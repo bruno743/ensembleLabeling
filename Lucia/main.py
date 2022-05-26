@@ -44,7 +44,7 @@ def _poly_apro(results):
 
 	return polynomials
 
-def first_stage(df, dfN, X, Y, columnNames):
+def first_stage(df, dfN, X, Y, columnNames, kmeans):
     kernel = 'linear'
     c = 100
     gama = 'auto'

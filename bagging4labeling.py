@@ -2,6 +2,7 @@ from sklearn.datasets import load_iris
 from sklearn.datasets import load_breast_cancer
 from sklearn.datasets import load_wine
 from sklearn.preprocessing import MinMaxScaler, normalize
+from sklearn.cluster import KMeans
 import pandas as pd
 import numpy as np
 
@@ -32,11 +33,13 @@ def loadDatabase():
     dfNormal[:] = normalize(scaler.fit_transform(dfNormal))
     dfNormal['target'] = df['target']
 
-    return df, dfNormal, df.drop(['target'], axis=1).values, df['target'].values, list(df.drop(['target'], axis=1).columns)
+    kmeans = KMeans(n_clusters=len(np.unique(df['target'].values))).fit(df.drop(['target'], axis=1).values)
+
+    return df, dfNormal, df.drop(['target'], axis=1).values, df['target'].values, list(df.drop(['target'], axis=1).columns), kmeans
 
 
 def bagging(database, perSamples, n, choice):
-    df, dfN, X, Y, columnNames = database
+    df, dfN, X, Y, columnNames, kmeans = database
     from Lopes import main as mLopes
     from Lucia import main as mLucia
     from Pertinencia import main as mPertinence
@@ -48,7 +51,7 @@ def bagging(database, perSamples, n, choice):
     elif choice == 'pertinence':
         method = mPertinence
 
-    baseInformation, nGroups = method.first_stage(df, dfN, X, Y, columnNames)
+    baseInformation, nGroups = method.first_stage(df, dfN, X, Y, columnNames, kmeans)
     L = [0]*nGroups
     A = [0.]*nGroups
 
@@ -86,4 +89,32 @@ def bestLabels(labels, accs):
 
     print(R)
 
-bestLabels(zip(labels_0, labels_1, labels_2), zip(accur_0, accur_1, accur_2))
+def comp(G, group, model):
+    for t in model:
+        for m in t:
+            for g in G:
+                if m[0] not in g: continue
+                p = group[(group[m[0]] >= m[1]) & (group[m[0]] <= m[2])]
+                if len(p)/len(group) > g[3]:
+                    G[G.index(g)] = (m[0], m[1], m[2],len(p)/len(group))
+    return G
+
+def bestAtts(db, tupl, labels):
+    df, dfN, X, Y, columnNames, kmeans = db
+    G = []
+    for t in tuple(tupl):
+        A = []
+        for model in t:
+            for a in model:
+                if (a[0], 0, 0, .0) not in A:
+                    A.append((a[0], 0, 0, .0))
+        G.append(A)
+    
+    for i, group in df.groupby('target'):
+        for model in labels:
+            G[i] = comp(G[i], group, model)
+    
+    print(G)
+
+bestAtts(db, zip(labels_0, labels_1, labels_2), [labels_0, labels_1, labels_2])
+#bestLabels(zip(labels_0, labels_1, labels_2), zip(accur_0, accur_1, accur_2))
