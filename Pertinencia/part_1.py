@@ -1,4 +1,4 @@
-from sklearn.cluster import KMeans
+#from sklearn.cluster import KMeans
 
 
 def part_1(kmeans, dataset, num_groups):

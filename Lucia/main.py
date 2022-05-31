@@ -1,10 +1,7 @@
-from itertools import count
 import warnings
-import os.path
 import numpy as np
 import pandas as pd
 
-from sklearn.preprocessing import minmax_scale
 from .regression_model import _TrainingModels
 from .rotulator_model import _range_delimitation
 from .rotulate import _label

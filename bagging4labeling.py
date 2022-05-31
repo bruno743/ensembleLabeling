@@ -52,8 +52,8 @@ def bagging(database, perSamples, n, choice):
         method = mPertinence
 
     baseInformation, nGroups = method.first_stage(df, dfN, X, Y, columnNames, kmeans)
-    L = [0]*nGroups
-    A = [0.]*nGroups
+    L = [0]*nGroups # Labels
+    A = [0.]*nGroups # Accuracy
 
     for per in perSamples:
         for i in range(n):
@@ -73,21 +73,22 @@ def bagging(database, perSamples, n, choice):
     return L, A
 
 db = loadDatabase()
-labels_0, accur_0 = bagging(db, [1., .8, .65], 3, 'lucia')
-labels_1, accur_1 = bagging(db, [1., .8, .65], 2, 'lopes')
-labels_2, accur_2 = bagging(db, [1., .8, .65], 3, 'pertinence')
+labels_0, accur_0 = bagging(db, [1., .8], 5, 'lucia')
+labels_1, accur_1 = bagging(db, [1., .8], 4, 'lopes')
+labels_2, accur_2 = bagging(db, [1., .8], 5, 'pertinence')
 
 def bestLabels(labels, accs):
-    R = []
-    I = []
+    R = [] # result
+    I = [] # index
     for a in tuple(accs):
         I.append(a.index(max(a)))
     
     for l in tuple(labels):
+        print(f'{l[I[0]]}\n')
         R.append(l[I[0]])
         del I[0]
 
-    print(R)
+    return R
 
 def comp(G, group, model):
     for t in model:
@@ -100,21 +101,29 @@ def comp(G, group, model):
     return G
 
 def bestAtts(db, tupl, labels):
-    df, dfN, X, Y, columnNames, kmeans = db
-    G = []
+    df = db[0]
+    L = [] # labels
     for t in tuple(tupl):
-        A = []
+        A = [] # accuracys
         for model in t:
             for a in model:
                 if (a[0], 0, 0, .0) not in A:
                     A.append((a[0], 0, 0, .0))
-        G.append(A)
+        L.append(A)
     
-    for i, group in df.groupby('target'):
-        for model in labels:
-            G[i] = comp(G[i], group, model)
+    if min(np.unique(df['target'].values)) > 0:
+        for i, group in df.groupby('target'):
+            for model in labels:
+                L[i-1] = comp(L[i-1], group, model)
+    else:
+        for i, group in df.groupby('target'):
+            for model in labels:
+                L[i] = comp(L[i], group, model)
     
-    print(G)
+    for l in L:
+        print(f'{l}\n')
+    
+    return L
 
-bestAtts(db, zip(labels_0, labels_1, labels_2), [labels_0, labels_1, labels_2])
+#bestAtts(db, zip(labels_0, labels_2), [labels_0, labels_2])
 #bestLabels(zip(labels_0, labels_1, labels_2), zip(accur_0, accur_1, accur_2))
