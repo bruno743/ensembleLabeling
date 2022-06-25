@@ -1,8 +1,7 @@
-from sklearn.datasets import load_iris
-from sklearn.datasets import load_breast_cancer
-from sklearn.datasets import load_wine
+from sklearn.datasets import load_iris, load_breast_cancer, load_wine
 from sklearn.preprocessing import MinMaxScaler, normalize
 from sklearn.cluster import KMeans
+import concurrent.futures
 import pandas as pd
 import numpy as np
 
@@ -69,13 +68,20 @@ def bagging(database, perSamples, n, choice):
                     A[j] = float(acc[j])
                     L[j] = label[j]
 
-    print(f'\n\nLabels:\n{L}\n\nAccuracy: {A}\n\n')
+    print(f'\n\nLabels for {choice}:\n{L}\n\nAccuracy: {A}\n\n')
     return L, A
 
 db = loadDatabase()
-labels_0, accur_0 = bagging(db, [1., .8], 5, 'lucia')
-labels_1, accur_1 = bagging(db, [1., .8], 4, 'lopes')
-labels_2, accur_2 = bagging(db, [1., .8], 5, 'pertinence')
+with concurrent.futures.ProcessPoolExecutor() as executor:
+    results = executor.map(bagging, [db, db, db], [[1.], [1.], [1.]],
+                    [12, 12, 12], ['lopes', 'lucia', 'pertinence'])
+#labels_0, accur_0 = bagging(db, [1.], 1, 'lopes')
+#labels_1, accur_1 = bagging(db, [1.], 1, 'lucia')
+#labels_2, accur_2 = bagging(db, [1., .8], 5, 'pertinence')
+results = list(results)
+labels_0, accur_0 = results[0]
+labels_1, accur_1 = results[1]
+labels_2, accur_2 = results[2]
 
 def bestLabels(labels, accs):
     R = [] # result
@@ -83,6 +89,7 @@ def bestLabels(labels, accs):
     for a in tuple(accs):
         I.append(a.index(max(a)))
     
+    print(f'Best methods in label:\n')
     for l in tuple(labels):
         print(f'{l[I[0]]}\n')
         R.append(l[I[0]])
@@ -91,13 +98,12 @@ def bestLabels(labels, accs):
     return R
 
 def comp(G, group, model):
-    for t in model:
-        for m in t:
-            for g in G:
-                if m[0] not in g: continue
-                p = group[(group[m[0]] >= m[1]) & (group[m[0]] <= m[2])]
-                if len(p)/len(group) > g[3]:
-                    G[G.index(g)] = (m[0], m[1], m[2],len(p)/len(group))
+    for m in model:
+        for g in G:
+            if m[0] not in g: continue
+            p = group[(group[m[0]] >= m[1]) & (group[m[0]] <= m[2])]
+            if len(p)/len(group) > g[3]:
+                G[G.index(g)] = (m[0], m[1], m[2],len(p)/len(group))
     return G
 
 def bestAtts(db, tupl, labels):
@@ -113,17 +119,18 @@ def bestAtts(db, tupl, labels):
     
     if min(np.unique(df['target'].values)) > 0:
         for i, group in df.groupby('target'):
-            for model in labels:
-                L[i-1] = comp(L[i-1], group, model)
+            for model_ in labels:
+                L[i-1] = comp(L[i-1], group, model_[i-1])
     else:
         for i, group in df.groupby('target'):
-            for model in labels:
-                L[i] = comp(L[i], group, model)
+            for model_ in labels:
+                L[i] = comp(L[i], group, model_[i])
     
+    print(f'Best atributes in label:\n')
     for l in L:
         print(f'{l}\n')
     
     return L
 
-#bestAtts(db, zip(labels_0, labels_2), [labels_0, labels_2])
+#bestAtts(db, zip(labels_0, labels_1, labels_2), [labels_0, labels_1, labels_2])
 #bestLabels(zip(labels_0, labels_1, labels_2), zip(accur_0, accur_1, accur_2))

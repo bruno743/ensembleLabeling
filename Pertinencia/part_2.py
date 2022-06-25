@@ -47,7 +47,8 @@ def part_2(dataset, num_groups, GS, IGS, columnNames, pertinence_array=None):
         for i in range(num_attrs):
             elements = []
             for j in range(num_groups):
-                elements.append([round(k, 2) for k in numpy.arange(_list[j][i][0], (_list[j][i][1] + 0.01), 0.01)])
+                if len(globals()[f'group_{j}']) > 0:
+                    elements.append([round(k, 2) for k in numpy.arange(_list[j][i][0], (_list[j][i][1] + 0.01), 0.01)])
 
             intersection_list.append(elements)
 
