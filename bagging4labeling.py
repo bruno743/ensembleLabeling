@@ -68,34 +68,66 @@ def bagging(database, perSamples, n, choice):
                     A[j] = float(acc[j])
                     L[j] = label[j]
 
-    print(f'\n\nLabels for {choice}:\n{L}\n\nAccuracy: {A}\n\n')
+    print(f'\n\nLabels for {choice}:')
+    for l in L: print(l)
+    print(f'\nAccuracy: {A}\n')
     return L, A
 
 db = loadDatabase()
-with concurrent.futures.ProcessPoolExecutor() as executor:
-    results = executor.map(bagging, [db, db, db], [[1.], [1.], [1.]],
-                    [12, 12, 12], ['lopes', 'lucia', 'pertinence'])
-#labels_0, accur_0 = bagging(db, [1.], 1, 'lopes')
-#labels_1, accur_1 = bagging(db, [1.], 1, 'lucia')
-#labels_2, accur_2 = bagging(db, [1., .8], 5, 'pertinence')
+with concurrent.futures.ThreadPoolExecutor() as executor:
+    results = executor.map(bagging, [db, db, db], [[1., .8], [1., .8], [1., .8]],
+                    [8, 8, 8], ['lopes', 'lucia', 'pertinence'])
+#labels_0, accur_0 = bagging(db, [1., .8], 7, 'lopes')
+#labels_1, accur_1 = bagging(db, [1., .8], 7, 'lucia')
+#labels_2, accur_2 = bagging(db, [1., .8], 7, 'pertinence')
 results = list(results)
 labels_0, accur_0 = results[0]
 labels_1, accur_1 = results[1]
 labels_2, accur_2 = results[2]
 
 def bestLabels(labels, accs):
-    R = [] # result
-    I = [] # index
-    for a in tuple(accs):
-        I.append(a.index(max(a)))
+    labels = tuple(labels)
+    accs = tuple(accs)
     
-    print(f'Best methods in label:\n')
-    for l in tuple(labels):
-        print(f'{l[I[0]]}\n')
-        R.append(l[I[0]])
-        del I[0]
+    print(f'\nBest methods in label:\n')
 
-    return R
+    I = []
+    for a in accs:
+        I.append(max(a))
+
+    df0 = pd.DataFrame(columns=['cluster', 'label', 'acc'])
+    df1 = pd.DataFrame(columns=['cluster', 'label', 'acc'])
+    count = 0
+    for l in labels:
+        c, r, a = [], [], []
+        for i in range(3):
+            c.append(count)             #cluster
+            r.append(l[i])              #label
+            a.append(accs[count][i])    #accuracy
+        df1['cluster'] = c
+        df1['label'] = r
+        df1['acc'] = a
+        df0 = pd.concat([df0, df1])
+        count += 1
+
+    df1 = pd.DataFrame(columns=['cluster', 'label', 'acc'])
+    df0 = df0.groupby('cluster')
+    for index, group in df0:
+        g = group.copy()
+        g = g[g['acc'] == I[index]]
+        if len(g) > 1:
+            numAtt = 0
+            g_ = g.copy()
+            for method in g_.values:
+                if len(method[1]) > numAtt:
+                    numAtt = len(method[1])
+                    d = {'cluster': [method[0]], 'label': [method[1]], 'acc': [method[2]]}
+                    g = pd.DataFrame(data=d)
+            
+        print(f"{g['label'].values[0]}\n")
+        df1 = pd.concat([df1, g])
+
+    return df1
 
 def comp(G, group, model):
     for m in model:
@@ -104,6 +136,9 @@ def comp(G, group, model):
             p = group[(group[m[0]] >= m[1]) & (group[m[0]] <= m[2])]
             if len(p)/len(group) > g[3]:
                 G[G.index(g)] = (m[0], m[1], m[2],len(p)/len(group))
+            elif len(p)/len(group) == g[3]:
+                if m[2]-m[1] < g[2]-g[1]:
+                    G[G.index(g)] = (m[0], m[1], m[2],len(p)/len(group))
     return G
 
 def bestAtts(db, tupl, labels):
@@ -126,11 +161,11 @@ def bestAtts(db, tupl, labels):
             for model_ in labels:
                 L[i] = comp(L[i], group, model_[i])
     
-    print(f'Best atributes in label:\n')
+    print(f'\nBest atributes in label:\n')
     for l in L:
         print(f'{l}\n')
     
     return L
 
-#bestAtts(db, zip(labels_0, labels_1, labels_2), [labels_0, labels_1, labels_2])
-#bestLabels(zip(labels_0, labels_1, labels_2), zip(accur_0, accur_1, accur_2))
+bestAtts(db, zip(labels_0, labels_1, labels_2), [labels_0, labels_1, labels_2])
+bestLabels(zip(labels_0, labels_1, labels_2), zip(accur_0, accur_1, accur_2))
